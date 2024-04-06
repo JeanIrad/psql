@@ -2,7 +2,7 @@ import {Request, Response, NextFunction} from 'express';
 import asyncMiddleware from '../middlewares/asyncMiddleware';
 import { pool
  } from '../db/db';
- import { getAllStudents, getStudentById,createStudent, checkEmailExists } from '../db/queries';
+ import { getAllStudents, getStudentById,createStudent, checkEmailExists, deleteStudent, updateStudent } from '../db/queries';
 
 export default class StudentsController {
    static getStudents = asyncMiddleware(async (req: Request, res: Response) => {
@@ -29,9 +29,16 @@ export default class StudentsController {
          res.send(rows)
     } )
     static updateStudent = asyncMiddleware(async (req: Request, res: Response) => {
-         res.send('Update a student')
+     const id = Number(req.params.id)
+     const {name, email, age, dob} = req.body
+     const {rows} = await pool.query(getStudentById, [id])
+     if (rows.length === 0) { 
+          res.status(404).send('Student not found')  }
+     await pool.query(updateStudent, [name, email, age, dob, id])
+         res.status(200).send('Update a student')
     } ) 
     static deleteStudent = asyncMiddleware(async (req: Request, res: Response) => {
+     await pool.query(deleteStudent, [Number(req.params.id)])
          res.send('Delete a student')
     } )
     static getStudentCourses = asyncMiddleware(async (req: Request, res: Response) => {
